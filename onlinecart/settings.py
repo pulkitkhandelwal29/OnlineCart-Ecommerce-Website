@@ -10,6 +10,8 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
+import os
+
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -109,7 +111,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Kolkata'
 
 USE_I18N = True
 
@@ -120,8 +122,25 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
-
 STATIC_URL = '/static/'
+
+#This will create the static folder and will access everything from this directory
+STATIC_ROOT = os.path.join(BASE_DIR,'static')
+
+#where to look for all our staticfiles(here we have keep data --  photo)
+STATICFILES_DIRS= [
+    os.path.join(BASE_DIR,'onlinecart/static')
+]
+
+
+
+#Media FILES
+MEDIA_URL = '/media/'
+
+#This will create the media folder and will access everything from this directory
+MEDIA_ROOT = os.path.join(BASE_DIR,'media')
+#One line also need to be included in urls.py file to read MEDIA files
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
