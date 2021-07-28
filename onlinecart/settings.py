@@ -59,7 +59,7 @@ ROOT_URLCONF = 'onlinecart.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': ['onlinecart/templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
