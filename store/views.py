@@ -10,6 +10,7 @@ def home(request):
     return render(request,'store/index.html',{'products':products})
 
 def store(request,category_slug=None): #opening web page using slug (Store/shirts)
+    #Display Products by Category
     categories = None
     products = None
 
