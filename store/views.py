@@ -24,3 +24,14 @@ def store(request,category_slug=None): #opening web page using slug (Store/shirt
 
     return render(request,'store/store.html',{'products':products,'product_count':product_count})
     #method to pass information to html
+
+def product_detail(request,category_slug,product_slug):
+    ''' Product detail functionality'''
+    try:
+        #accessing slug of category(defined as foreign key) using __
+        single_product = Product.objects.get(category__slug = category_slug, slug = product_slug )
+    except Exception as e:
+        raise e
+
+    context = {'single_product':single_product} #Another way to pass information to html (creating dictionary before)
+    return render(request,'store/product_detail.html',context)
