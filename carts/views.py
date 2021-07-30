@@ -4,6 +4,8 @@ from store.models import Product
 
 from .models import Cart,CartItem
 
+from django.core.exceptions import ObjectDoesNotExist
+
 
 # Create your views here.
 def cart(request,total=0,quantity=0,cart_items=None):
@@ -16,7 +18,7 @@ def cart(request,total=0,quantity=0,cart_items=None):
         tax = (2*total)/100
         grand_total = total + tax
 
-    except ObjectNotExist:
+    except ObjectDoesNotExist: #if cart has 0 items, no error will be shown
         pass #ignore, if object does not exist
 
     #total cart_items, total price,quantity added,tax,grand_total
