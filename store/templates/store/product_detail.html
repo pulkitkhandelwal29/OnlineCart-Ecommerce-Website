@@ -21,8 +21,8 @@
 		<main class="col-md-6 border-left">
 
 <!--Product variation (dyanmic values will be provided to select, will be added in admin page)-->
-<form action="{% url 'add_cart' single_product.id %}" method="POST">
-	{% csrf_token %}
+<form action="{% url 'add_cart' single_product.id %}" method="GET">
+	<!-- {% csrf_token %} -->
 	<article class="content-body">
 
 	<h2 class="title">{{ single_product.product_name }}</h2>
@@ -41,7 +41,7 @@
 					<select name='color' class='form-control' required>
 						<option value='' disabled selected>Select</option>
 						{% for i in single_product.variation_set.colors %} <!--_set.colors will bring all the data from variation model-->
-						<option value='{{ i.varition_value | lower }}'>{{ i.variation_value | capfirst }}</option>
+						<option value='{{ i.variation_value | lower }}'>{{ i.variation_value | capfirst }}</option>
 						{% endfor %}
 					</select>
 			</div>
@@ -52,7 +52,7 @@
 				<select name='size' class='form-control' required>
 					<option value='' disabled selected>Select</option>
 					{% for i in single_product.variation_set.sizes %} <!--_set.sizes will bring all the sizes data from variation model-->
-					<option value='{{ i.varition_value | lower }}'>{{ i.variation_value | capfirst }}</option>
+					<option value='{{ i.variation_value | lower }}'>{{ i.variation_value | capfirst }}</option>
 					{% endfor %}
 				</select>
 			</div>
