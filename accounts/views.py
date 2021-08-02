@@ -5,6 +5,11 @@ from .forms import RegistrationForm
 from .models import Account
 
 from django.contrib import messages #django messages
+
+from django.contrib import auth
+
+from django.contrib.auth.decorators import login_required
+
 # Create your views here.
 
 def register(request):
@@ -37,8 +42,28 @@ def register(request):
     context={'form':form}
     return render(request,'accounts/register.html',context)
 
+
+
 def login(request):
+    if request.method == "POST":
+        email = request.POST['email'] #accesing email from form
+        password = request.POST['password']
+
+        user = auth.authenticate(request,email=email, password=password)
+
+        if user is not None:
+            auth.login(request,user) #If user exists, login with this user
+            # messages.success(request,"You are now logged in.") (We will be doing this is dashboard)
+            return redirect('home')
+        else:
+            messages.error(request,'Invalid login credentials')
+            return redirect('login')
+
     return render(request,'accounts/login.html')
 
+
+@login_required(login_url = 'login') #if not logged in, redirect to url 'login'
 def logout(request):
-    return render(request,'accounts/logout.html')
+    auth.logout(request)
+    messages.success(request,"You are logged out.")
+    return redirect('login')
