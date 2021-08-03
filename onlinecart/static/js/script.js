@@ -61,4 +61,4 @@ $(document).ready(function() {
 //message alerts
 setTimeout(function(){
   $('#message').fadeOut('slow') //accessing HTML div id 'message' (alerts.html)
-},3000)
+},5000)
