@@ -10,6 +10,8 @@ from django.contrib import auth
 
 from django.contrib.auth.decorators import login_required
 
+import requests #Dynamically redirect the user to next page
+
 #verification Email
 from django.contrib.sites.shortcuts import get_current_site
 from django.template.loader import render_to_string
@@ -17,6 +19,9 @@ from django.utils.http import urlsafe_base64_encode,urlsafe_base64_decode
 from django.utils.encoding import force_bytes
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import EmailMessage
+
+from carts.views import _cart_id
+from carts.models import Cart,CartItem
 
 from django.http import HttpResponse
 # Create your views here.
@@ -67,6 +72,8 @@ def register(request):
 
 
 
+
+
 def login(request):
     if request.method == "POST":
         email = request.POST['email'] #accesing email from form
@@ -75,14 +82,69 @@ def login(request):
         user = auth.authenticate(request,email=email, password=password)
 
         if user is not None:
+            #adding all the cart items from not logged in to logged in
+            try:
+                cart = Cart.objects.get(cart_id=_cart_id(request))
+                is_cart_item_exists = CartItem.objects.filter(cart=cart).exists()
+                if is_cart_item_exists:
+                    cart_item = CartItem.objects.filter(cart = cart)
+
+                    #getting the product variations by cart_id
+                    product_variation=[] #items should be grouped when clicked on login (so thats why working in login function)
+                    for item in cart_item:
+                        variation = item.variations.all()
+                        product_variation.append(list(variation)) #converting to list because it return QueryResult
+
+                    #Get the cart items from the user to access his product variations
+                    cart_item = CartItem.objects.filter(user=user)
+                    # existing_variations -> database
+                    # current variation -> product_variation
+                    # item_id -> database
+                    ex_var_list = []
+                    id = []
+                    for item in cart_item:
+                        existing_variation = item.variations.all()
+                        ex_var_list.append(list(existing_variation))
+                        id.append(item.id)
+
+                    #Find the common product variation in above these 2 lists
+                    for pr in product_variation:
+                        if pr in ex_var_list:
+                            index = ex_var_list.index(pr)
+                            item_id = id[index]
+                            item = CartItem.objects.get(id=item_id)
+                            item.quantity+=1
+                            item.user = user
+                            item.save()
+                        else:
+                            cart_item = CartItem.objects.filter(cart=cart)
+                            for item in cart_item:
+                                item.user = user
+                                item.save()
+
+            except:
+                pass
             auth.login(request,user) #If user exists, login with this user
             messages.success(request,"You are now logged in.") #(We will be doing this is dashboard)
-            return redirect('dashboard')
+            #user shoud go to checkout page if he presses on checkout without logged in
+            url = request.META.get('HTTP_REFERER') #stores the previous URL from where we came
+            try:
+                query = requests.utils.urlparse(url).query
+                #next=/cart/checkout/
+                params = dict(x.split('=') for x in query.split('&')) #'next':/cart/checkout
+                if 'next' in params:
+                    nextPage = params['next']
+                    return redirect(nextPage)
+            except:
+                return redirect('dashboard')
         else:
             messages.error(request,'Invalid login credentials')
             return redirect('login')
 
     return render(request,'accounts/login.html')
+
+
+
 
 
 @login_required(login_url = 'login') #if not logged in, redirect to url 'login'
