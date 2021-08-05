@@ -1,6 +1,6 @@
-from django.shortcuts import render,get_object_or_404
+from django.shortcuts import render,get_object_or_404,redirect
 
-from .models import Product
+from .models import Product , ReviewRating
 
 from category.models import Category
 
@@ -12,6 +12,12 @@ from django.core.paginator import EmptyPage, PageNotAnInteger,Paginator
 
 #Helps in quering and providing condition for OR (implemented in search)
 from django.db.models import Q
+
+from .forms import ReviewForm
+
+from django.contrib import messages
+
+from orders.models import OrderProduct
 # Create your views here.
 
 def home(request):
@@ -54,6 +60,8 @@ def store(request,category_slug=None): #opening web page using slug (Store/shirt
     return render(request,'store/store.html',context)
     #method to pass information to html
 
+
+
 def product_detail(request,category_slug,product_slug):
     ''' Product detail functionality'''
     try:
@@ -64,8 +72,24 @@ def product_detail(request,category_slug,product_slug):
     except Exception as e:
         raise e
 
-    context = {'single_product':single_product,'in_cart':in_cart} #Another way to pass information to html (creating dictionary before)
+    #checking if user has bought the product, then only he will be able to review
+    try:
+        orderproduct = OrderProduct.objects.filter(user = request.user,product_id=single_product.id).exists()
+    except OrderProduct.DoesNotExist:
+        orderproduct=None
+
+    #Get the reviews (for particular product, status also should be true- if admin doesn't want to show, he can disable status in admin page)
+    reviews = ReviewRating.objects.filter(product_id = single_product.id,status=True)
+
+    context = {  #Another way to pass information to html (creating dictionary before)
+    'single_product':single_product,
+    'in_cart':in_cart,
+    'orderproduct':orderproduct,
+    'reviews':reviews
+    }
     return render(request,'store/product_detail.html',context)
+
+
 
 
 def search(request):
@@ -78,3 +102,30 @@ def search(request):
             product_count = products.count()
     context = {'products':products,'product_count':product_count}
     return render(request,'store/store.html',context)
+
+
+
+def submit_review(request,product_id):
+    url = request.META.get('HTTP_REFERER') #store the page of URL
+    if request.method == "POST":
+        try:
+            #if reviews exist for the user, update the reviews
+            reviews = ReviewRating.objects.get(user__id = request.user.id,product__id = product_id) #fetching the id from user (foreign key)
+            form = ReviewForm(request.POST, instance = reviews) #we want to check if already reviews by user, update the review
+            form.save()
+            messages.success(request,'Thank you! Your review has been updated.')
+            return redirect(url)
+        except ReviewRating.DoesNotExist:
+            #if no reviews exist, create a new one
+            form = ReviewForm(request.POST)
+            if form.is_valid():
+                data = ReviewRating()
+                data.subject = form.cleaned_data['subject']
+                data.rating = form.cleaned_data['rating']
+                data.review = form.cleaned_data['review']
+                data.ip = request.META.get('REMOTE_ADDR')
+                data.product_id = product_id
+                data.user_id = request.user.id
+                data.save()
+                messages.success(request,'Thank you! Your review has been submitted.')
+                return redirect(url)

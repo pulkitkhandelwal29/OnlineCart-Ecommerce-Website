@@ -163,6 +163,6 @@ MESSAGE_TAGS = {
 #SMTP configuration
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587 #port of gmail
-EMAIL_HOST_USER = 'onlinekartecommerce@gmail.com'
+EMAIL_HOST_USER = 'onlinekartcommerce@gmail.com'
 EMAIL_HOST_PASSWORD = 'commercekartonline'
 EMAIL_USE_TLS = True
