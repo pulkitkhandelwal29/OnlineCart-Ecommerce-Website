@@ -73,9 +73,13 @@ def product_detail(request,category_slug,product_slug):
         raise e
 
     #checking if user has bought the product, then only he will be able to review
-    try:
-        orderproduct = OrderProduct.objects.filter(user = request.user,product_id=single_product.id).exists()
-    except OrderProduct.DoesNotExist:
+    if request.user.is_authenticated:
+        try:
+            orderproduct = OrderProduct.objects.filter(user = request.user,product_id=single_product.id).exists()
+        except OrderProduct.DoesNotExist:
+            orderproduct=None
+
+    else:
         orderproduct=None
 
     #Get the reviews (for particular product, status also should be true- if admin doesn't want to show, he can disable status in admin page)
