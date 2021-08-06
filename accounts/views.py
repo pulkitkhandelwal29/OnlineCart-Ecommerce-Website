@@ -1,8 +1,8 @@
-from django.shortcuts import render,redirect
+from django.shortcuts import render,redirect,get_object_or_404
 
 from .forms import RegistrationForm
 
-from .models import Account
+from .models import Account, UserProfile
 
 from django.contrib import messages #django messages
 
@@ -11,6 +11,8 @@ from django.contrib import auth
 from django.contrib.auth.decorators import login_required
 
 import requests #Dynamically redirect the user to next page
+
+from orders.models import Order,OrderProduct
 
 #verification Email
 from django.contrib.sites.shortcuts import get_current_site
@@ -22,6 +24,8 @@ from django.core.mail import EmailMessage
 
 from carts.views import _cart_id
 from carts.models import Cart,CartItem
+
+from .forms import UserForm,UserProfileForm
 
 from django.http import HttpResponse
 # Create your views here.
@@ -179,7 +183,16 @@ def activate(request,uidb64,token):
 
 @login_required(login_url = 'login')
 def dashboard(request):
-    return render(request,'accounts/dashboard.html')
+    #filtering orders
+    orders = Order.objects.order_by('created_at').filter(user_id = request.user.id,is_ordered=True)
+    orders_count = orders.count()
+    #used for displaying profile picture in dashboard
+    userprofile = UserProfile.objects.get(user_id = request.user.id)
+    context = {
+        'orders_count':orders_count,
+        'userprofile':userprofile,
+    }
+    return render(request,'accounts/dashboard.html',context)
 
 
 
@@ -250,3 +263,87 @@ def resetPassword(request):
 
     else:
         return render(request,'accounts/resetPassword.html')
+
+
+
+@login_required(login_url='login')
+def my_orders(request):
+    orders = Order.objects.filter(user=request.user,is_ordered=True).order_by('-created_at')
+    context = {'orders':orders}
+    return render(request,'accounts/my_orders.html',context)
+
+
+
+@login_required(login_url='login')
+def edit_profile(request):
+    userprofile = get_object_or_404(UserProfile,user = request.user)
+    if request.method == "POST":
+        user_form = UserForm(request.POST,instance=request.user) #instance as user we are passing as we want to update its details
+        profile_form = UserProfileForm(request.POST,request.FILES,instance=userprofile)
+
+        if user_form.is_valid() and profile_form.is_valid():
+            user_form.save()
+            profile_form.save()
+            messages.success(request,'Your profile has been updated.')
+            return redirect('edit_profile')
+
+    else:
+        user_form = UserForm(instance=request.user) #if get request, then you can just see the information
+        profile_form = UserProfileForm(instance=userprofile)
+
+    context = {
+            'user_form':user_form,
+            'profile_form':profile_form,
+            'userprofile':userprofile, #this will be able to show image (profile_picture)
+            }
+    return render(request,'accounts/edit_profile.html',context)
+
+
+
+
+@login_required(login_url='login')
+def change_password(request):
+    if request.method == "POST":
+        current_password = request.POST['current_password']
+        new_password = request.POST['new_password']
+        confirm_password = request.POST['confirm_password']
+
+        user = Account.objects.get(username__exact=request.user.username) #username should be exact in database
+        #as soon as the password is changed, django logs you out of account
+
+        if new_password == confirm_password:
+            success = user.check_password(current_password) #checking user password with the current password given
+            if success:
+                user.set_password(new_password)
+                user.save()
+                messages.success(request, 'Your Password was Updated Successfully.')
+                return redirect('change_password')
+            else:
+                messages.error(request, 'You Entered A Wrong Current Password.')
+                return redirect('change_password')
+        else:
+                messages.error(request, 'Passwords did not match.')
+                return redirect('change_password')
+
+    return render(request,'accounts/change_password.html')
+
+
+
+@login_required(login_url='login')
+def order_detail(request,order_id):
+    '''Clicking on Order id in my orders in dashboard, want to see the whole order details'''
+    #In OrderProduct,Order, we have the details of the order
+    order_detail = OrderProduct.objects.filter(order__order_number = order_id) #underscore is used to access variable from that class as it is a foreign key
+    order = Order.objects.get(order_number=order_id)
+
+    subtotal=0
+    for i in order_detail:
+        subtotal += i.product_price * i.quantity
+
+    context={
+        'order_detail':order_detail,
+        'order':order,
+        'subtotal':subtotal
+    }
+
+    return render(request,'accounts/order_detail.html')
