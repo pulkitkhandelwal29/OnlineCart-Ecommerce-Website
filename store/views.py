@@ -1,6 +1,6 @@
 from django.shortcuts import render,get_object_or_404,redirect
 
-from .models import Product , ReviewRating
+from .models import Product , ReviewRating , ProductGallery
 
 from category.models import Category
 
@@ -21,8 +21,15 @@ from orders.models import OrderProduct
 # Create your views here.
 
 def home(request):
-    products = Product.objects.all().filter(is_available=True)
-    return render(request,'store/index.html',{'products':products})
+    products = Product.objects.all().filter(is_available=True).order_by('created_date')
+
+    #Get the reviews (for particular product, status also should be true- if admin doesn't want to show, he can disable status in admin page)
+    for product in products:
+        reviews = ReviewRating.objects.filter(product_id = product.id,status=True)
+
+    return render(request,'store/index.html',{'products':products,'reviews':reviews})
+
+
 
 def store(request,category_slug=None): #opening web page using slug (Store/shirts)
     #Display Products by Category
@@ -62,6 +69,7 @@ def store(request,category_slug=None): #opening web page using slug (Store/shirt
 
 
 
+
 def product_detail(request,category_slug,product_slug):
     ''' Product detail functionality'''
     try:
@@ -85,11 +93,15 @@ def product_detail(request,category_slug,product_slug):
     #Get the reviews (for particular product, status also should be true- if admin doesn't want to show, he can disable status in admin page)
     reviews = ReviewRating.objects.filter(product_id = single_product.id,status=True)
 
+    #Get the product gallery images
+    product_gallery = ProductGallery.objects.filter(product_id=single_product.id)
+
     context = {  #Another way to pass information to html (creating dictionary before)
     'single_product':single_product,
     'in_cart':in_cart,
     'orderproduct':orderproduct,
-    'reviews':reviews
+    'reviews':reviews,
+    'product_gallery':product_gallery
     }
     return render(request,'store/product_detail.html',context)
 
