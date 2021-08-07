@@ -1,5 +1,7 @@
 {% extends 'base.html' %}
 
+{% load static %}
+
 {% block content %}
 
 
@@ -31,7 +33,11 @@
 				<div class="col-md-6">
 						 <div class="card" style="text-align:center;">
 								 <div class="card-body">
+									 		{% if userprofile %}
 										 <img src="{{ userprofile.profile_picture.url }}" alt="User Profile Picture" width="50" height="50" style="border-radius:50%;">
+										 	{% else %}
+										 <img src="{% static 'images/avatars/avatar.jpg' %}" alt="User Profile Picture" width="50" height="50" style="border-radius:50%;">
+										 	{% endif %}
 										 <p class="mb-0"><strong>{{user.email}}</strong></p>
 										 <p>{{user.phone_number}}</p>
 								 </div>

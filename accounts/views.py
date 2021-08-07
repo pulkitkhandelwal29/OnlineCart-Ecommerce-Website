@@ -187,7 +187,9 @@ def dashboard(request):
     orders = Order.objects.order_by('created_at').filter(user_id = request.user.id,is_ordered=True)
     orders_count = orders.count()
     #used for displaying profile picture in dashboard
-    userprofile = UserProfile.objects.get(user_id = request.user.id)
+    userprofile = UserProfile.objects.filter(user_id = request.user.id).exists()
+    if userprofile:
+        userprofile = UserProfile.objects.get(user_id = request.user.id)
     context = {
         'orders_count':orders_count,
         'userprofile':userprofile,
@@ -276,26 +278,53 @@ def my_orders(request):
 
 @login_required(login_url='login')
 def edit_profile(request):
-    userprofile = get_object_or_404(UserProfile,user = request.user)
-    if request.method == "POST":
-        user_form = UserForm(request.POST,instance=request.user) #instance as user we are passing as we want to update its details
-        profile_form = UserProfileForm(request.POST,request.FILES,instance=userprofile)
+    userprofile = UserProfile.objects.filter(user_id = request.user.id).exists()
+    if userprofile:
+        userprofile = get_object_or_404(UserProfile,user = request.user)
+        if request.method == "POST":
+            user_form = UserForm(request.POST,instance=request.user) #instance as user we are passing as we want to update its details
+            profile_form = UserProfileForm(request.POST,request.FILES,instance=userprofile)
 
-        if user_form.is_valid() and profile_form.is_valid():
-            user_form.save()
-            profile_form.save()
-            messages.success(request,'Your profile has been updated.')
-            return redirect('edit_profile')
+            if user_form.is_valid() and profile_form.is_valid():
+                user_form.save()
+                profile_form.save()
+                messages.success(request,'Your profile has been updated.')
+                return redirect('edit_profile')
 
+        else:
+            user_form = UserForm(instance=request.user) #if get request, then you can just see the information
+            profile_form = UserProfileForm(instance=userprofile)
+
+        context = {
+                'user_form':user_form,
+                'profile_form':profile_form,
+                'userprofile':userprofile, #this will be able to show image (profile_picture)
+                }
     else:
-        user_form = UserForm(instance=request.user) #if get request, then you can just see the information
-        profile_form = UserProfileForm(instance=userprofile)
+        #Create an entry in user profile
+        email = Account.objects.get(email=request.user.email)
+        userprofile = UserProfile(user=email)
+        userprofile.save()
+        userprofile = get_object_or_404(UserProfile,user = request.user)
+        if request.method == "POST":
+            user_form = UserForm(request.POST,instance=request.user) #instance as user we are passing as we want to update its details
+            profile_form = UserProfileForm(request.POST,request.FILES,instance=userprofile)
 
-    context = {
-            'user_form':user_form,
-            'profile_form':profile_form,
-            'userprofile':userprofile, #this will be able to show image (profile_picture)
-            }
+            if user_form.is_valid() and profile_form.is_valid():
+                user_form.save()
+                profile_form.save()
+                messages.success(request,'Your profile has been updated.')
+                return redirect('edit_profile')
+
+        else:
+            user_form = UserForm(instance=request.user) #if get request, then you can just see the information
+            profile_form = UserProfileForm(instance=userprofile)
+
+        context = {
+                'user_form':user_form,
+                'profile_form':profile_form,
+                'userprofile':userprofile, #this will be able to show image (profile_picture)
+                }
     return render(request,'accounts/edit_profile.html',context)
 
 
