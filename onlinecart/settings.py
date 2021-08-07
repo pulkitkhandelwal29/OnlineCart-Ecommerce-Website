@@ -14,6 +14,10 @@ import os
 
 from pathlib import Path
 
+#Security using Python decouple (pip install python-decouple)
+#1.In root folder of project, create file .env
+from decouple import config
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -22,10 +26,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-l1@xktxosg5ney(v@g@vy*20s73)(d*bai-*k=jho&m91+tg-^'
+#Accessing the key from .env using python-decouple
+SECRET_KEY = config('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+#same with DEBUG (config returns string, so need to convert to bool)
+DEBUG = config('DEBUG',cast=bool,default=False)
 
 ALLOWED_HOSTS = []
 
@@ -44,6 +50,7 @@ INSTALLED_APPS = [
     'store',
     'carts',
     'orders',
+    'admin_honeypot', #admin page honeypot
 ]
 
 MIDDLEWARE = [
@@ -161,8 +168,8 @@ MESSAGE_TAGS = {
 
 
 #SMTP configuration
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587 #port of gmail
-EMAIL_HOST_USER = 'onlinekartcommerce@gmail.com'
-EMAIL_HOST_PASSWORD = 'commercekartonline'
-EMAIL_USE_TLS = True
+EMAIL_HOST = config('EMAIL_HOST')
+EMAIL_PORT = config('EMAIL_PORT',cast=int) #port of gmail
+EMAIL_HOST_USER = config('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
+EMAIL_USE_TLS = config('EMAIL_USE_TLS',cast=bool)
