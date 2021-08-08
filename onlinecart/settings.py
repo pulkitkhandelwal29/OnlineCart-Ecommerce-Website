@@ -33,7 +33,7 @@ SECRET_KEY = config('SECRET_KEY')
 #same with DEBUG (config returns string, so need to convert to bool)
 DEBUG = config('DEBUG',cast=bool,default=False)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['onlinekartdjango-env.eba-6myzp4nm.us-west-2.elasticbeanstalk.com']
 
 
 # Application definition
@@ -90,6 +90,8 @@ AUTH_USER_MODEL = 'accounts.Account' #Telling django that we will be using Custo
 
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
+
+
 
 DATABASES = {
     'default': {
